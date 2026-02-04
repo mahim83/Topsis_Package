@@ -1,0 +1,11 @@
+This project is developed for academic and educational purposes.
+
+The source code may be used, modified, and shared strictly for learning,
+assignment submission, and non-commercial use.
+
+No warranty is provided. The author is not responsible for any misuse
+or damage caused by this software.
+
+Author: Mahim Katiyar
+Roll Number: 102303958
+Institution: Thapar Institute of Engineering and Technology
