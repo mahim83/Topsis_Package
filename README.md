@@ -1,46 +1,48 @@
-# 📊 TOPSIS — Multi-Criteria Decision Analysis
+# TOPSIS — Multi-Criteria Decision Analysis
 
-![Python](https://img.shields.io/badge/Python-3.7%2B-blue?logo=python&logoColor=white)
-![Streamlit](https://img.shields.io/badge/Streamlit-App-FF4B4B?logo=streamlit&logoColor=white)
-![License](https://img.shields.io/badge/License-Academic-green)
+[![Python](https://img.shields.io/badge/Python-3.7%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-App-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
+[![License](https://img.shields.io/badge/License-Academic-green)](Topsis-Mahim-102303958/LICENSE.txt)
 
 An implementation of **TOPSIS** (*Technique for Order Preference by Similarity to
 Ideal Solution*) — a multi-criteria decision-making method that ranks a set of
 alternatives by how close each one is to the ideal solution and how far it is from
 the worst one.
 
-The project ships in **three forms**, all sharing the same core algorithm:
+**Live app:** https://topsispackage-mahim.streamlit.app
+
+The project ships in three forms, all sharing the same core algorithm:
 
 | # | Form | Entry point | Best for |
 |---|------|-------------|----------|
-| 1 | 🖥️ **Command-line script** | [`topsis_102303958.py`](topsis_102303958.py) | Quick one-off runs |
-| 2 | 📦 **Installable pip package** | [`Topsis-Mahim-102303958/`](Topsis-Mahim-102303958/) | Reuse via the `topsis` command |
-| 3 | 🌐 **Streamlit web app** | [`streamlit_app.py`](streamlit_app.py) | Interactive UI, deployable online |
+| 1 | Command-line script | [`topsis_102303958.py`](topsis_102303958.py) | Quick one-off runs |
+| 2 | Installable pip package | [`Topsis-Mahim-102303958/`](Topsis-Mahim-102303958/) | Reuse via the `topsis` command |
+| 3 | Streamlit web app | [`streamlit_app.py`](streamlit_app.py) | Interactive UI, deployed online |
 
 ---
 
-## ✨ Features
+## Features
 
 - Accepts **CSV or XLSX** input
 - Full input **validation** (column count, numeric checks, matching weights/impacts)
-- Interactive web UI: upload → configure → **ranked table + chart** → download CSV
+- Interactive web UI: upload, configure, view a ranked table and chart, download CSV
 - Zero-config deployment on **Streamlit Community Cloud**
 
 ---
 
-## 🧮 How TOPSIS works
+## How TOPSIS works
 
 1. **Normalize** the decision matrix (vector normalization).
 2. **Weight** each normalized column by its criterion weight.
 3. Determine the **ideal best** and **ideal worst** value per criterion
-   (depends on whether the impact is `+` or `-`).
+   (depending on whether the impact is `+` or `-`).
 4. Compute each alternative's **Euclidean distance** to the ideal best (`d+`) and
    ideal worst (`d-`).
-5. **Score** = `d- / (d+ + d-)`  → higher is better. Rank by score.
+5. **Score** = `d- / (d+ + d-)` — higher is better. Rank by score.
 
 ---
 
-## 🚀 Usage
+## Usage
 
 ### 1. Command-line script
 
@@ -68,44 +70,45 @@ streamlit run streamlit_app.py
 ```
 
 Opens at `http://localhost:8501`. Upload a file, set weights and impacts, then
-view/download the ranked results.
+view and download the ranked results.
 
 ---
 
-## ☁️ Deploy on Streamlit Community Cloud
+## Deploy on Streamlit Community Cloud
 
 1. Push this repository to GitHub.
-2. Go to **[share.streamlit.io](https://share.streamlit.io)** → sign in with GitHub → **Create app**.
-3. Select this repo, branch `main`, main file **`streamlit_app.py`**.
-4. Click **Deploy** — you get a public `…streamlit.app` URL.
+2. Go to [share.streamlit.io](https://share.streamlit.io), sign in with GitHub, and
+   select **Create app**.
+3. Choose this repo, branch `main`, main file **`streamlit_app.py`**.
+4. Select **Deploy** — you get a public `…streamlit.app` URL.
 
-> `requirements.txt` tells Streamlit Cloud which packages to install; no other
-> configuration is needed.
+`requirements.txt` lists the packages Streamlit Cloud installs; `.streamlit/config.toml`
+sets the theme and upload limit. No other configuration is required.
 
 ---
 
-## 📥 Input format
+## Input format
 
 - CSV or XLSX with **at least 3 columns**.
-- **First column** = the alternative name / identifier.
-- **Remaining columns** = numeric criteria only.
+- **First column** — the alternative name / identifier.
+- **Remaining columns** — numeric criteria only.
 - **Weights** — comma-separated numbers, one per criterion (e.g. `1,1,1,1,1`).
 - **Impacts** — comma-separated `+` or `-`, one per criterion (e.g. `+,+,-,+,-`).
   Use `+` when a higher value is better, `-` when lower is better.
 - The number of weights, impacts, and criteria must be equal.
 
-## 📤 Output
+## Output
 
 Two columns are appended to your data:
 
 - **Topsis Score** — closeness to the ideal solution (0–1).
 - **Rank** — `1` = best alternative.
 
-**Example** (`data.csv` with weights `1,1,1,1,1` and impacts `+,+,-,+,-`):
+Example (`data.csv` with weights `1,1,1,1,1` and impacts `+,+,-,+,-`):
 
 | Fund Name | Topsis Score | Rank |
 |-----------|-------------:|:----:|
-| M7        | 0.7097       | 🥇 1 |
+| M7        | 0.7097       | 1    |
 | M4        | 0.6952       | 2    |
 | M5        | 0.4776       | 3    |
 | …         | …            | …    |
@@ -113,12 +116,13 @@ Two columns are appended to your data:
 
 ---
 
-## 🗂️ Project structure
+## Project structure
 
 ```
 .
-├── streamlit_app.py            # Streamlit web app (deployable)
+├── streamlit_app.py            # Streamlit web app (deployed)
 ├── requirements.txt            # Web-app dependencies
+├── .streamlit/config.toml      # Theme and upload settings
 ├── topsis_102303958.py         # Standalone CLI script
 ├── data.csv                    # Sample input
 ├── topsis_result.csv           # Sample output
@@ -133,11 +137,11 @@ Two columns are appended to your data:
 
 ---
 
-## 📄 License
+## License
 
-Developed for **academic and educational purposes** — see
+Developed for academic and educational purposes — see
 [`LICENSE.txt`](Topsis-Mahim-102303958/LICENSE.txt).
 
-## 👤 Author
+## Author
 
-**Mahim Katiyar** · Roll No: 102303958 · mkatiyar_be23@thapar.edu
+**Mahim Katiyar** · Roll No. 102303958 · mkatiyar_be23@thapar.edu
