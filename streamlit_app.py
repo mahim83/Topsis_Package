@@ -2,13 +2,10 @@
 TOPSIS Analyzer — Streamlit app
 ===============================
 
-Upload a CSV/XLSX file, provide weights and impacts, and get the alternatives
-ranked using the TOPSIS (Technique for Order Preference by Similarity to Ideal
-Solution) method. Results are shown on screen (table + chart) and can be
-downloaded as CSV.
-
-Deploys on Streamlit Community Cloud (https://streamlit.io) with no server
-configuration.
+Upload a CSV/XLSX file, provide weights and impacts, and rank the alternatives
+using the TOPSIS (Technique for Order Preference by Similarity to Ideal Solution)
+method. Results are shown as a ranked table and chart, and can be downloaded as
+CSV.
 
 Author: Mahim Katiyar (Roll: 102303958)
 """
@@ -18,7 +15,7 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
-BAR_COLOR = "#4C78A8"  # single accessible hue — reads on light and dark surfaces
+ACCENT = "#185FA5"  # matches the app theme primaryColor
 
 
 # --------------------------- TOPSIS core ---------------------------
@@ -70,50 +67,66 @@ def compute_topsis(df, weights, impacts):
 
 
 def ranking_chart(result):
-    """Sorted horizontal bar chart of Topsis scores (magnitude, single hue)."""
+    """Sorted horizontal bar chart of Topsis scores (single-hue magnitude view)."""
     label_col = result.columns[0]
     data = result[[label_col, "Topsis Score", "Rank"]]
 
     base = alt.Chart(data).encode(
         y=alt.Y(f"{label_col}:N", sort="-x", title=None),
-        x=alt.X("Topsis Score:Q", title="Topsis Score",
-                scale=alt.Scale(domain=[0, 1])),
+        x=alt.X("Topsis Score:Q", title="Topsis Score", scale=alt.Scale(domain=[0, 1])),
     )
-    bars = base.mark_bar(cornerRadiusEnd=4, size=20, color=BAR_COLOR).encode(
+    bars = base.mark_bar(cornerRadiusEnd=3, size=18, color=ACCENT).encode(
         tooltip=[
             alt.Tooltip(f"{label_col}:N"),
             alt.Tooltip("Topsis Score:Q", format=".4f"),
             alt.Tooltip("Rank:Q"),
         ],
     )
-    labels = base.mark_text(align="left", dx=4, fontSize=12).encode(
+    labels = base.mark_text(align="left", dx=5, fontSize=12, color="#555").encode(
         text=alt.Text("Topsis Score:Q", format=".3f"),
     )
-    return (bars + labels).properties(height=alt.Step(34))
+    return (bars + labels).properties(height=alt.Step(32)).configure_view(strokeOpacity=0)
 
 
 # --------------------------- UI ---------------------------
-st.set_page_config(page_title="TOPSIS Analyzer", page_icon="📊", layout="wide")
+st.set_page_config(page_title="TOPSIS Analyzer", page_icon="📊", layout="centered")
 
-# ---- Sidebar: inputs ----
+st.markdown(
+    """
+    <style>
+      #MainMenu, footer {visibility: hidden;}
+      .block-container {padding-top: 3rem; padding-bottom: 3rem; max-width: 960px;}
+      h1, h2, h3 {letter-spacing: -0.01em;}
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+# ---- Sidebar: settings ----
 with st.sidebar:
-    st.header("⚙️ Inputs")
-    uploaded = st.file_uploader("Data file (CSV or XLSX)", type=["csv", "xlsx"])
-    weights_str = st.text_input("Weights", "1,1,1,1,1", help="Comma-separated numbers, one per criterion.")
-    impacts_str = st.text_input("Impacts", "+,+,-,+,-", help="Comma-separated '+' or '-', one per criterion.")
-    run = st.button("🚀 Run TOPSIS", type="primary", use_container_width=True)
+    st.subheader("Analysis settings")
+    uploaded = st.file_uploader("Data file", type=["csv", "xlsx"],
+                                help="CSV or XLSX. First column = names, rest = numeric criteria.")
+    weights_str = st.text_input("Weights", "1,1,1,1,1",
+                                help="Comma-separated numbers, one per criterion.")
+    impacts_str = st.text_input("Impacts", "+,+,-,+,-",
+                                help="Comma-separated + or -, one per criterion.")
+    run = st.button("Run analysis", type="primary", use_container_width=True)
 
-    with st.expander("ℹ️ Input format"):
+    with st.expander("Input requirements"):
         st.markdown(
-            "- **File**: first column = names/IDs; other columns = numeric criteria.\n"
-            "- **Weights**: e.g. `1,1,1,1,1`.\n"
-            "- **Impacts**: `+` (higher is better) or `-` (lower is better), e.g. `+,+,-,+,-`.\n"
-            "- Number of weights, impacts, and criteria must match."
+            "- First column holds the alternative names; every other column must be numeric.\n"
+            "- Provide one weight and one impact per criterion.\n"
+            "- Use **+** where a higher value is better and **-** where lower is better."
         )
 
-# ---- Main: header ----
-st.title("📊 TOPSIS Analyzer")
-st.caption("Rank alternatives across multiple weighted criteria using the TOPSIS method.")
+# ---- Header ----
+st.title("TOPSIS Analyzer")
+st.write(
+    "Rank alternatives across multiple weighted criteria using the Technique for "
+    "Order Preference by Similarity to Ideal Solution."
+)
+st.divider()
 
 # ---- Read the uploaded file ----
 df = None
@@ -129,22 +142,22 @@ if uploaded is not None:
 
 # ---- Empty state ----
 if df is None:
-    st.info("👈 Upload a data file in the sidebar to get started.")
+    st.info("Upload a data file from the sidebar to begin.")
     st.stop()
 
-# ---- Preview / summary ----
+# ---- Summary + preview ----
 n_alt, n_crit = df.shape[0], max(df.shape[1] - 1, 0)
-m1, m2 = st.columns(2)
-m1.metric("Alternatives", n_alt)
-m2.metric("Criteria", n_crit)
+c1, c2 = st.columns(2)
+c1.metric("Alternatives", n_alt)
+c2.metric("Criteria", n_crit)
 
 if not run:
     st.subheader("Data preview")
     st.dataframe(df, use_container_width=True, hide_index=True)
-    st.info("Set your weights and impacts in the sidebar, then click **Run TOPSIS**.")
+    st.caption("Set the weights and impacts in the sidebar, then run the analysis.")
     st.stop()
 
-# ---- Run TOPSIS ----
+# ---- Run analysis ----
 try:
     weights = [float(w.strip()) for w in weights_str.split(",")]
 except ValueError:
@@ -162,14 +175,11 @@ result = compute_topsis(df, weights, impacts).sort_values("Rank")
 label_col = result.columns[0]
 best_row = result.loc[result["Rank"] == 1].iloc[0]
 
-st.success("TOPSIS analysis complete.")
+r1, r2 = st.columns(2)
+r1.metric("Top-ranked alternative", str(best_row[label_col]))
+r2.metric("Best score", f"{best_row['Topsis Score']:.4f}")
 
-# Winner highlight
-w1, w2 = st.columns(2)
-w1.metric("🏆 Top-ranked", str(best_row[label_col]))
-w2.metric("Best score", f"{best_row['Topsis Score']:.4f}")
-
-tab_table, tab_chart = st.tabs(["📋 Results table", "📊 Ranking chart"])
+tab_table, tab_chart = st.tabs(["Ranked results", "Chart"])
 
 with tab_table:
     st.dataframe(
@@ -185,7 +195,7 @@ with tab_table:
     )
     csv_bytes = result.to_csv(index=False).encode("utf-8")
     st.download_button(
-        "⬇️ Download result CSV",
+        "Download results (CSV)",
         data=csv_bytes,
         file_name="topsis_result.csv",
         mime="text/csv",
@@ -193,3 +203,6 @@ with tab_table:
 
 with tab_chart:
     st.altair_chart(ranking_chart(result), use_container_width=True)
+
+st.divider()
+st.caption("Built by Mahim Katiyar · Roll No. 102303958")
