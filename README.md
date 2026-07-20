@@ -1,6 +1,7 @@
 # TOPSIS — Multi-Criteria Decision Analysis
 
 [![Python](https://img.shields.io/badge/Python-3.7%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
+[![PyPI](https://img.shields.io/badge/PyPI-Topsis--Mahim--102303958-3775A9?logo=pypi&logoColor=white)](https://pypi.org/project/Topsis-Mahim-102303958/)
 [![Streamlit](https://img.shields.io/badge/Streamlit-App-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
 [![License](https://img.shields.io/badge/License-Academic-green)](Topsis-Mahim-102303958/LICENSE.txt)
 
@@ -54,13 +55,40 @@ python topsis_102303958.py <InputDataFile> <Weights> <Impacts> <OutputResultFile
 python topsis_102303958.py data.csv "1,1,1,1,1" "+,+,-,+,-" result.csv
 ```
 
-### 2. Pip package
+### 2. Pip package (install on your own device)
+
+The package is published on **PyPI**, so anyone can install it on any machine
+(Windows, macOS, or Linux) with Python 3.7+ and pip. No need to clone this repo.
+
+**Prerequisite:** Python 3.7 or newer with `pip`. Check with `python --version` and
+`pip --version`.
+
+**Install from PyPI:**
 
 ```bash
-cd Topsis-Mahim-102303958
-pip install .
+pip install Topsis-Mahim-102303958
+```
+
+This installs a `topsis` command that is available system-wide. Run it from any
+folder that contains your input file:
+
+```bash
+topsis <InputDataFile> <Weights> <Impacts> <OutputResultFileName>
+```
+
+```bash
 topsis data.csv "1,1,1,1,1" "+,+,-,+,-" result.csv
 ```
+
+**Upgrade to the latest version:**
+
+```bash
+pip install --upgrade Topsis-Mahim-102303958
+```
+
+> **Tip:** if the `topsis` command isn't found after installing, make sure your
+> Python `Scripts`/`bin` directory is on your `PATH`, or run it via
+> `python -m topsis_mahim_102303958.topsis <args>`.
 
 ### 3. Streamlit web app (run locally)
 

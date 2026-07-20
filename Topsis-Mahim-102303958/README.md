@@ -7,16 +7,17 @@ It provides a command-line tool to rank alternatives based on multiple criteria,
 
 ## Installation
 
-To install the package locally, go to the project directory and run:
-
-```bash
-pip install .
-```
-
-If installed from PyPI, use:
+The package is published on **PyPI** and can be installed on any device
+(Windows, macOS, or Linux) running Python 3.7+ with pip:
 
 ```bash
 pip install Topsis-Mahim-102303958
+```
+
+To upgrade to the latest version:
+
+```bash
+pip install --upgrade Topsis-Mahim-102303958
 ```
 
 ---
