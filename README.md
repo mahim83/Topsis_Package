@@ -74,16 +74,11 @@ view and download the ranked results.
 
 ---
 
-## Deploy on Streamlit Community Cloud
+## Deployment
 
-1. Push this repository to GitHub.
-2. Go to [share.streamlit.io](https://share.streamlit.io), sign in with GitHub, and
-   select **Create app**.
-3. Choose this repo, branch `main`, main file **`streamlit_app.py`**.
-4. Select **Deploy** — you get a public `…streamlit.app` URL.
-
-`requirements.txt` lists the packages Streamlit Cloud installs; `.streamlit/config.toml`
-sets the theme and upload limit. No other configuration is required.
+The app is already deployed on Streamlit Community Cloud and runs live at
+**https://topsispackage-mahim.streamlit.app**. Every push to `main` redeploys it
+automatically — `requirements.txt` and `.streamlit/config.toml` handle the setup.
 
 ---
 
