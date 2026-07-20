@@ -1,86 +1,143 @@
-# TOPSIS — Multi-Criteria Decision Analysis
+# 📊 TOPSIS — Multi-Criteria Decision Analysis
 
-Implements **TOPSIS** (Technique for Order Preference by Similarity to Ideal
-Solution) in Python — a method that ranks alternatives across several weighted
-criteria. The project ships in three forms:
+![Python](https://img.shields.io/badge/Python-3.7%2B-blue?logo=python&logoColor=white)
+![Streamlit](https://img.shields.io/badge/Streamlit-App-FF4B4B?logo=streamlit&logoColor=white)
+![License](https://img.shields.io/badge/License-Academic-green)
 
-1. **Standalone CLI script** — [`topsis_102303958.py`](topsis_102303958.py)
-2. **Installable pip package** — [`Topsis-Mahim-102303958/`](Topsis-Mahim-102303958/)
-3. **Streamlit web app** — [`streamlit_app.py`](streamlit_app.py) (deployable on [streamlit.io](https://streamlit.io))
+An implementation of **TOPSIS** (*Technique for Order Preference by Similarity to
+Ideal Solution*) — a multi-criteria decision-making method that ranks a set of
+alternatives by how close each one is to the ideal solution and how far it is from
+the worst one.
+
+The project ships in **three forms**, all sharing the same core algorithm:
+
+| # | Form | Entry point | Best for |
+|---|------|-------------|----------|
+| 1 | 🖥️ **Command-line script** | [`topsis_102303958.py`](topsis_102303958.py) | Quick one-off runs |
+| 2 | 📦 **Installable pip package** | [`Topsis-Mahim-102303958/`](Topsis-Mahim-102303958/) | Reuse via the `topsis` command |
+| 3 | 🌐 **Streamlit web app** | [`streamlit_app.py`](streamlit_app.py) | Interactive UI, deployable online |
 
 ---
 
-## 1. Command-line script
+## ✨ Features
+
+- Accepts **CSV or XLSX** input
+- Full input **validation** (column count, numeric checks, matching weights/impacts)
+- Interactive web UI: upload → configure → **ranked table + chart** → download CSV
+- Zero-config deployment on **Streamlit Community Cloud**
+
+---
+
+## 🧮 How TOPSIS works
+
+1. **Normalize** the decision matrix (vector normalization).
+2. **Weight** each normalized column by its criterion weight.
+3. Determine the **ideal best** and **ideal worst** value per criterion
+   (depends on whether the impact is `+` or `-`).
+4. Compute each alternative's **Euclidean distance** to the ideal best (`d+`) and
+   ideal worst (`d-`).
+5. **Score** = `d- / (d+ + d-)`  → higher is better. Rank by score.
+
+---
+
+## 🚀 Usage
+
+### 1. Command-line script
 
 ```bash
 python topsis_102303958.py <InputDataFile> <Weights> <Impacts> <OutputResultFileName>
 ```
 
-Example:
-
 ```bash
 python topsis_102303958.py data.csv "1,1,1,1,1" "+,+,-,+,-" result.csv
 ```
 
-## 2. Pip package
+### 2. Pip package
 
 ```bash
 cd Topsis-Mahim-102303958
 pip install .
-```
-
-Then use the `topsis` console command:
-
-```bash
 topsis data.csv "1,1,1,1,1" "+,+,-,+,-" result.csv
 ```
 
-## 3. Streamlit web app
-
-Run locally:
+### 3. Streamlit web app (run locally)
 
 ```bash
 pip install -r requirements.txt
 streamlit run streamlit_app.py
 ```
 
-Opens at `http://localhost:8501`. Upload a file, enter weights and impacts,
-view/download the ranked results, and optionally have them emailed.
-
-### Deploy on Streamlit Community Cloud
-
-1. Push this repo to GitHub.
-2. Go to [share.streamlit.io](https://share.streamlit.io) → **Create app** →
-   deploy from GitHub, main file `streamlit_app.py`.
-3. (Optional, for email) In **Advanced settings → Secrets**, add:
-   ```toml
-   SENDER_EMAIL = "your_email@gmail.com"
-   SENDER_PASSWORD = "your_gmail_app_password"
-   ```
-   Use a [Gmail App Password](https://myaccount.google.com/apppasswords), not
-   your account password. See [`.streamlit/secrets.toml.example`](.streamlit/secrets.toml.example).
+Opens at `http://localhost:8501`. Upload a file, set weights and impacts, then
+view/download the ranked results.
 
 ---
 
-## Input file format
+## ☁️ Deploy on Streamlit Community Cloud
+
+1. Push this repository to GitHub.
+2. Go to **[share.streamlit.io](https://share.streamlit.io)** → sign in with GitHub → **Create app**.
+3. Select this repo, branch `main`, main file **`streamlit_app.py`**.
+4. Click **Deploy** — you get a public `…streamlit.app` URL.
+
+> `requirements.txt` tells Streamlit Cloud which packages to install; no other
+> configuration is needed.
+
+---
+
+## 📥 Input format
 
 - CSV or XLSX with **at least 3 columns**.
 - **First column** = the alternative name / identifier.
 - **Remaining columns** = numeric criteria only.
-- **Weights**: comma-separated numbers, one per criterion (e.g. `1,1,1,1,1`).
-- **Impacts**: comma-separated `+` or `-`, one per criterion (e.g. `+,+,-,+,-`).
+- **Weights** — comma-separated numbers, one per criterion (e.g. `1,1,1,1,1`).
+- **Impacts** — comma-separated `+` or `-`, one per criterion (e.g. `+,+,-,+,-`).
   Use `+` when a higher value is better, `-` when lower is better.
 - The number of weights, impacts, and criteria must be equal.
 
-## Output
+## 📤 Output
 
-Two columns are appended to the input data:
+Two columns are appended to your data:
 
 - **Topsis Score** — closeness to the ideal solution (0–1).
-- **Rank** — 1 = best alternative.
+- **Rank** — `1` = best alternative.
+
+**Example** (`data.csv` with weights `1,1,1,1,1` and impacts `+,+,-,+,-`):
+
+| Fund Name | Topsis Score | Rank |
+|-----------|-------------:|:----:|
+| M7        | 0.7097       | 🥇 1 |
+| M4        | 0.6952       | 2    |
+| M5        | 0.4776       | 3    |
+| …         | …            | …    |
+| M8        | 0.3928       | 8    |
 
 ---
 
-## Author
+## 🗂️ Project structure
+
+```
+.
+├── streamlit_app.py            # Streamlit web app (deployable)
+├── requirements.txt            # Web-app dependencies
+├── topsis_102303958.py         # Standalone CLI script
+├── data.csv                    # Sample input
+├── topsis_result.csv           # Sample output
+└── Topsis-Mahim-102303958/     # Installable pip package
+    ├── setup.py
+    ├── README.md
+    ├── LICENSE.txt
+    └── topsis_mahim_102303958/
+        ├── __init__.py
+        └── topsis.py
+```
+
+---
+
+## 📄 License
+
+Developed for **academic and educational purposes** — see
+[`LICENSE.txt`](Topsis-Mahim-102303958/LICENSE.txt).
+
+## 👤 Author
 
 **Mahim Katiyar** · Roll No: 102303958 · mkatiyar_be23@thapar.edu

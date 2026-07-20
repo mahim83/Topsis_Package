@@ -1,31 +1,24 @@
 """
-TOPSIS Web Service — Streamlit app
-==================================
+TOPSIS Analyzer — Streamlit app
+===============================
 
 Upload a CSV/XLSX file, provide weights and impacts, and get the alternatives
 ranked using the TOPSIS (Technique for Order Preference by Similarity to Ideal
-Solution) method. Results can be downloaded and optionally emailed.
+Solution) method. Results are shown on screen (table + chart) and can be
+downloaded as CSV.
 
 Deploys on Streamlit Community Cloud (https://streamlit.io) with no server
-configuration. Email credentials are read from Streamlit secrets or environment
-variables — never hardcoded.
+configuration.
 
 Author: Mahim Katiyar (Roll: 102303958)
 """
 
-import os
-import re
-import smtplib
-from email import encoders
-from email.mime.base import MIMEBase
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-
+import altair as alt
 import numpy as np
 import pandas as pd
 import streamlit as st
 
-EMAIL_RE = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
+BAR_COLOR = "#4C78A8"  # single accessible hue — reads on light and dark surfaces
 
 
 # --------------------------- TOPSIS core ---------------------------
@@ -76,72 +69,53 @@ def compute_topsis(df, weights, impacts):
     return result
 
 
-# --------------------------- Email ---------------------------
-def _get_credentials():
-    """Read sender credentials from Streamlit secrets, then env vars."""
-    email = os.environ.get("SENDER_EMAIL")
-    password = os.environ.get("SENDER_PASSWORD")
-    try:
-        email = st.secrets.get("SENDER_EMAIL", email)
-        password = st.secrets.get("SENDER_PASSWORD", password)
-    except Exception:
-        # No secrets file configured — fall back to env vars.
-        pass
-    return email, password
+def ranking_chart(result):
+    """Sorted horizontal bar chart of Topsis scores (magnitude, single hue)."""
+    label_col = result.columns[0]
+    data = result[[label_col, "Topsis Score", "Rank"]]
 
-
-def send_email(receiver, csv_bytes, filename="topsis_result.csv"):
-    """Return (success: bool, error_message: str | None)."""
-    sender, password = _get_credentials()
-    if not sender or not password:
-        return False, "Email is not configured (set SENDER_EMAIL / SENDER_PASSWORD in secrets)."
-
-    msg = MIMEMultipart()
-    msg["From"] = sender
-    msg["To"] = receiver
-    msg["Subject"] = "TOPSIS Result File"
-    msg.attach(MIMEText(
-        "Hello,\n\nPlease find attached your TOPSIS result file.\n\n"
-        "Regards,\nTOPSIS Web Service",
-        "plain",
-    ))
-
-    part = MIMEBase("application", "octet-stream")
-    part.set_payload(csv_bytes)
-    encoders.encode_base64(part)
-    part.add_header("Content-Disposition", f"attachment; filename={filename}")
-    msg.attach(part)
-
-    try:
-        server = smtplib.SMTP("smtp.gmail.com", 587)
-        server.starttls()
-        server.login(sender, password)
-        server.send_message(msg)
-        server.quit()
-        return True, None
-    except Exception as e:
-        return False, str(e)
+    base = alt.Chart(data).encode(
+        y=alt.Y(f"{label_col}:N", sort="-x", title=None),
+        x=alt.X("Topsis Score:Q", title="Topsis Score",
+                scale=alt.Scale(domain=[0, 1])),
+    )
+    bars = base.mark_bar(cornerRadiusEnd=4, size=20, color=BAR_COLOR).encode(
+        tooltip=[
+            alt.Tooltip(f"{label_col}:N"),
+            alt.Tooltip("Topsis Score:Q", format=".4f"),
+            alt.Tooltip("Rank:Q"),
+        ],
+    )
+    labels = base.mark_text(align="left", dx=4, fontSize=12).encode(
+        text=alt.Text("Topsis Score:Q", format=".3f"),
+    )
+    return (bars + labels).properties(height=alt.Step(34))
 
 
 # --------------------------- UI ---------------------------
-st.set_page_config(page_title="TOPSIS Web Service", page_icon="📊")
-st.title("📊 TOPSIS Web Service")
-st.write(
-    "Rank alternatives across multiple weighted criteria using the **TOPSIS** "
-    "method. Upload your data, set weights and impacts, and get ranked results."
-)
+st.set_page_config(page_title="TOPSIS Analyzer", page_icon="📊", layout="wide")
 
-with st.expander("How to use / input format"):
-    st.markdown(
-        "- **File**: CSV or XLSX. First column = names/IDs; remaining columns = numeric criteria.\n"
-        "- **Weights**: comma-separated numbers, one per criterion (e.g. `1,1,1,1,1`).\n"
-        "- **Impacts**: comma-separated `+` or `-`, one per criterion (e.g. `+,+,-,+,-`).\n"
-        "  Use `+` if a higher value is better, `-` if lower is better.\n"
-        "- **Email** *(optional)*: receive the result file as an attachment."
-    )
+# ---- Sidebar: inputs ----
+with st.sidebar:
+    st.header("⚙️ Inputs")
+    uploaded = st.file_uploader("Data file (CSV or XLSX)", type=["csv", "xlsx"])
+    weights_str = st.text_input("Weights", "1,1,1,1,1", help="Comma-separated numbers, one per criterion.")
+    impacts_str = st.text_input("Impacts", "+,+,-,+,-", help="Comma-separated '+' or '-', one per criterion.")
+    run = st.button("🚀 Run TOPSIS", type="primary", use_container_width=True)
 
-uploaded = st.file_uploader("Input data file", type=["csv", "xlsx"])
+    with st.expander("ℹ️ Input format"):
+        st.markdown(
+            "- **File**: first column = names/IDs; other columns = numeric criteria.\n"
+            "- **Weights**: e.g. `1,1,1,1,1`.\n"
+            "- **Impacts**: `+` (higher is better) or `-` (lower is better), e.g. `+,+,-,+,-`.\n"
+            "- Number of weights, impacts, and criteria must match."
+        )
 
+# ---- Main: header ----
+st.title("📊 TOPSIS Analyzer")
+st.caption("Rank alternatives across multiple weighted criteria using the TOPSIS method.")
+
+# ---- Read the uploaded file ----
 df = None
 if uploaded is not None:
     try:
@@ -153,49 +127,62 @@ if uploaded is not None:
         st.error(f"Could not read the file: {e}")
         df = None
 
-    if df is not None:
-        st.subheader("Preview")
-        st.dataframe(df.head(), use_container_width=True)
-        n_criteria = max(df.shape[1] - 1, 0)
-        st.caption(f"Detected **{n_criteria}** criteria (columns after the first).")
+# ---- Empty state ----
+if df is None:
+    st.info("👈 Upload a data file in the sidebar to get started.")
+    st.stop()
 
-col1, col2 = st.columns(2)
-with col1:
-    weights_str = st.text_input("Weights (comma-separated)", "1,1,1,1,1")
-with col2:
-    impacts_str = st.text_input("Impacts (+/-, comma-separated)", "+,+,-,+,-")
+# ---- Preview / summary ----
+n_alt, n_crit = df.shape[0], max(df.shape[1] - 1, 0)
+m1, m2 = st.columns(2)
+m1.metric("Alternatives", n_alt)
+m2.metric("Criteria", n_crit)
 
-email = st.text_input("Email (optional — to receive the result file)")
+if not run:
+    st.subheader("Data preview")
+    st.dataframe(df, use_container_width=True, hide_index=True)
+    st.info("Set your weights and impacts in the sidebar, then click **Run TOPSIS**.")
+    st.stop()
 
-if st.button("Run TOPSIS", type="primary"):
-    if df is None:
-        st.error("Please upload a valid data file first.")
-        st.stop()
+# ---- Run TOPSIS ----
+try:
+    weights = [float(w.strip()) for w in weights_str.split(",")]
+except ValueError:
+    st.error("Weights must be numeric and comma-separated.")
+    st.stop()
 
-    try:
-        weights = [float(w.strip()) for w in weights_str.split(",")]
-    except ValueError:
-        st.error("Weights must be numeric and comma-separated.")
-        st.stop()
+impacts = [i.strip() for i in impacts_str.split(",")]
 
-    impacts = [i.strip() for i in impacts_str.split(",")]
+err = validate(df, weights, impacts)
+if err:
+    st.error(err)
+    st.stop()
 
-    err = validate(df, weights, impacts)
-    if err:
-        st.error(err)
-        st.stop()
+result = compute_topsis(df, weights, impacts).sort_values("Rank")
+label_col = result.columns[0]
+best_row = result.loc[result["Rank"] == 1].iloc[0]
 
-    result = compute_topsis(df, weights, impacts)
-    st.success("TOPSIS analysis complete.")
+st.success("TOPSIS analysis complete.")
 
-    st.subheader("Results")
+# Winner highlight
+w1, w2 = st.columns(2)
+w1.metric("🏆 Top-ranked", str(best_row[label_col]))
+w2.metric("Best score", f"{best_row['Topsis Score']:.4f}")
+
+tab_table, tab_chart = st.tabs(["📋 Results table", "📊 Ranking chart"])
+
+with tab_table:
     st.dataframe(
-        result.style.highlight_min(subset=["Rank"], color="#2e7d32"),
+        result,
+        hide_index=True,
         use_container_width=True,
+        column_config={
+            "Topsis Score": st.column_config.ProgressColumn(
+                "Topsis Score", format="%.4f", min_value=0.0, max_value=1.0,
+            ),
+            "Rank": st.column_config.NumberColumn("Rank", format="%d"),
+        },
     )
-    best_row = result.loc[result["Rank"] == 1].iloc[0, 0]
-    st.info(f"🏆 Top-ranked alternative: **{best_row}**")
-
     csv_bytes = result.to_csv(index=False).encode("utf-8")
     st.download_button(
         "⬇️ Download result CSV",
@@ -204,13 +191,5 @@ if st.button("Run TOPSIS", type="primary"):
         mime="text/csv",
     )
 
-    if email:
-        if not re.match(EMAIL_RE, email):
-            st.warning("Result is ready above, but the email address looks invalid — not sent.")
-        else:
-            with st.spinner(f"Emailing result to {email}…"):
-                ok, msg = send_email(email, csv_bytes)
-            if ok:
-                st.success(f"📧 Result also emailed to {email}.")
-            else:
-                st.info(f"Result is ready above, but email was not sent: {msg}")
+with tab_chart:
+    st.altair_chart(ranking_chart(result), use_container_width=True)
