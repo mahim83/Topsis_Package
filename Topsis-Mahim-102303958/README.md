@@ -16,7 +16,7 @@ pip install .
 If installed from PyPI, use:
 
 ```bash
-python -m pip install Topsis-Mahim-102303958
+pip install Topsis-Mahim-102303958
 ```
 
 ---
@@ -32,7 +32,7 @@ topsis <InputDataFile> <Weights> <Impacts> <OutputResultFileName>
 ### Example
 
 ```bash
-python -m topsis_mahim_102303958.topsis data.csv "1,1,1,1,1" "+,+,-,+,-" output.csv
+topsis data.csv "1,1,1,1,1" "+,+,-,+,-" output-result.csv
 ```
 
 ---
@@ -62,4 +62,3 @@ The output file contains two additional columns:
 Mahim Katiyar  
 Roll Number: 102303958  
 Email: mkatiyar_be23@thapar.edu
-
